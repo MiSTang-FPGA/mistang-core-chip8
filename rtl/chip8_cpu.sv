@@ -1,9 +1,10 @@
 // CHIP-8 CPU core for MiSTang. Original implementation.
 // Multi-cycle FSM, one state per `ce`. 4 KiB RAM (sync read), 64x32 1-bit framebuffer.
 module chip8_cpu #(
-    parameter ROM_FILE = "rom/test.hex"
+    parameter RAM_FILE = "rom/ram.hex"   // 4096 bytes: font at 0x000, program at 0x200
 )(
-    input  logic        clk,
+    input  logic        clk,         // CPU clock
+    input  logic        vclk,        // video / capture read clock
     input  logic        rst,
     input  logic        ce,          // CPU step enable (sets instruction speed)
     input  logic        tick60,      // 60 Hz timer tick
@@ -11,6 +12,9 @@ module chip8_cpu #(
     // video read port (clk domain)
     input  logic [10:0] vid_addr,
     output logic        vid_px,
+    input  logic [10:0] cap_addr,    // second read port (UART screenshot)
+    output logic        cap_px,
+    output logic [15:0] dbg,         // {st, pc} for the UART trailer
     output logic        beep
 );
     // ---------------- memory ----------------
@@ -18,11 +22,7 @@ module chip8_cpu #(
     logic [11:0] m_addr;
     logic [7:0]  m_wdata, m_rdata;
     logic        m_we;
-    initial begin
-        for (int i = 0; i < 4096; i++) ram[i] = 8'h00;
-        $readmemh("rom/font.hex", ram, 0, 79);
-        $readmemh(ROM_FILE, ram, 512);
-    end
+    initial $readmemh(RAM_FILE, ram);
     always_ff @(posedge clk) begin
         if (m_we) ram[m_addr] <= m_wdata;
         m_rdata <= ram[m_addr];
@@ -31,10 +31,12 @@ module chip8_cpu #(
     logic        fb [0:2047];
     logic [10:0] f_addr;
     logic        f_we, f_wdata, f_rdata;
-    initial for (int i = 0; i < 2048; i++) fb[i] = 1'b0;
     always_ff @(posedge clk) begin
         if (f_we) fb[f_addr] <= f_wdata;
         f_rdata <= fb[f_addr];
+        cap_px  <= fb[cap_addr];
+    end
+    always_ff @(posedge vclk) begin
         vid_px  <= fb[vid_addr];
     end
 
@@ -82,6 +84,7 @@ module chip8_cpu #(
     wire [7:0] vy = V[y];
 
     assign beep = (sndt != 0);
+    assign dbg  = {1'b0, st, pc[9:0]};
 
     // memory / framebuffer address mux
     always_comb begin

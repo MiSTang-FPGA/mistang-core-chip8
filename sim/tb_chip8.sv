@@ -3,7 +3,7 @@ module tb_chip8;
     logic clk = 0, rst = 1;
     logic [10:0] va = 0; logic vpx;
     logic beep;
-    chip8_cpu dut (.clk(clk), .rst(rst), .ce(1'b1), .tick60(1'b0), .keys(16'h0), .vid_addr(va), .vid_px(vpx), .beep(beep));
+    chip8_cpu dut (.clk(clk), .vclk(clk), .rst(rst), .ce(1'b1), .tick60(1'b0), .keys(16'h0), .vid_addr(va), .vid_px(vpx), .cap_addr(11'd0), .cap_px(), .dbg(),.beep(beep));
     always #5 clk = ~clk;
     integer f, i, r, c;
     reg [2047:0] img;

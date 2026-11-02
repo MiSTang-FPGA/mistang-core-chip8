@@ -59,3 +59,7 @@ for k,v in prog:
 open(sys.argv[1] if len(sys.argv)>1 else 'rom/test.hex','w').write('\n'.join('%02x'%b for b in out)+'\n')
 open('rom/test.ch8','wb').write(bytes(out))
 print(len(out),'bytes')
+font = [int(l,16) for l in open('rom/font.hex').read().split()]
+ram = font + [0]*(0x200-len(font)) + out
+ram += [0]*(4096-len(ram))
+open('rom/ram.hex','w').write('\n'.join('%02x'%b for b in ram)+'\n')

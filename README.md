@@ -9,4 +9,11 @@ CHIP-8 core for MiSTang (Sipeed Tang Nano 20K). Written from scratch.
 
 ![self-test frame from simulation](docs/img/sim-selftest.png)
 
-Status: CPU verified in simulation. Video output and board build: in progress.
+## Board build
+
+`rtl/top/chip8_top.sv`: 720p60 HDMI (64x32 at 16x), CPU on the 27 MHz clock, UART screenshot stream
+(`CH8F` + 256 bytes + 2 bytes state, 115200 baud, `tools/capture.py`). `build.sh` produces `build/chip8_top/chip8_top.fs`.
+Timing passes (clk_p 82 MHz at 74.25, CPU 39 MHz at 27). The UART stream is checked in simulation (`sim/tb_top.sv`).
+
+Status: CPU verified in simulation against the reference. On the board the design loads and the heartbeat LED runs,
+but a board screenshot is not captured yet: the USB-UART bridge currently returns no data, even for a plain square wave on the pin.
